@@ -1108,3 +1108,192 @@ char* reverse_words(char* str)
 
 	return str;
 }
+//*************************************************************************************************************
+#include <stdio.h>
+
+//метод str_len, возвращает длинну строки
+int str_len(char* str) {
+	
+    int i = 0;
+    while (str[i++] != '\0');
+    return i-1;//т.к. отсчет начинался с 0
+    
+}
+
+//метод str_cpy, посимвольно копирует строку src в dst, возвращая скопированную строку
+	//небезопасен, т.к. отсутствует проверка на переполнение памяти
+char* str_cpy(char* dst, char* src){
+	
+	unsigned i = 0;
+	do
+		dst[i] = src[i];
+	while (src[i++]);
+	return dst;
+
+}
+
+//метод str_cat, содержимое строки str1 дописывается после str1
+	//небезопасен, т.к. отсутствует проверка на переполнение памяти
+char* str_cat(char* str1, char* str2){
+
+	unsigned str1_len = str_len(str1);//используем ранее изученный метод str_len
+	unsigned i = 0;
+	
+	do
+		str1[i + str1_len] = str2[i];
+	while (str2[i++]);
+	
+	return str1;
+	
+return str_cpy(str1 + str_len(str1), str2);
+}
+
+//метод str_cmp, сравнивает 2 строки посимвольно, возвращая величину int !
+	//Случай 1: строки абсолютно идентичны, возвращай 0
+	//Случай 2: символ строки str1 больше по кодировке, чем символ строки str2, возвращай число>0
+	//Случай 3: символ строки str2 больше по кодировке, чем символ строки str1, возвращай число<0
+int str_cmp(char* str1, char* str2){
+
+	unsigned i = 0;
+	int delta;
+
+	do
+	{
+		delta = str1[i] - str2[i];
+	} while (!delta && str1[i++]);
+	//while идет на новый круг только тогда, когда delta=0 - > !delta=1 -> 1&&1=1 -> след. круг
+	//если delta !=0, то есть delta=1, тогда !delta=0 и 0&&1=0, цикл остановится
+	return (delta); 
+}
+
+//метод str_str, ищет строку sub в строке str, 
+	//возвращает указатель на символ с которого началось совпадение, 
+	//в случае отсутствия возвращает значнеи NULL
+char* str_str(char* str, char* sub){
+	
+	unsigned i = 0, j, flag;
+
+	do
+	{
+		j = 0;
+		flag = 1;
+		do 
+			//если нашли несовпадающие символы
+			if (str[i + j] != sub[j])
+			{
+				//сбросили флаг и вышли
+				flag = 0;
+				break;
+			}
+		
+		while (sub[++j]);//увеличиваем перед проверкой условия
+		if (flag) 
+			return (str+i);
+	} while (str[i++]);
+
+	return NULL;
+}
+
+//метод char_in_string, проверяет, есть ли в строке символ symbol или нет
+	//возвращая 1, если есть или 0, если нет
+	//нужен для проверки наличия '\0' в строке
+unsigned char_in_string(char symbol, char* str){
+	
+	unsigned i = 0;
+	
+	do
+		if (str[i] == symbol)
+			return 1;
+	while (str[i++]);
+
+	return 0;
+}
+
+//метод s_gets на базе fgets
+	//безопасная с точки зрения переполнения буфера
+	//реализация чтения строки с консоли
+		//Функция fgets() считывает до num-1 символов из файла stream
+		//и помещает их в массив символов, на который указывает str. 
+		//Символы считываются до тех пор, пока не встретится символ «новая строка»
+		//Чтение происходит из файла.
+char* s_gets(char* str, unsigned buf_size){
+
+	unsigned i = 0;
+	//если вызов fgets завершился возвратом NULL
+	if (!fgets(str, buf_size, stdin))//функцию fgets вы уже знаете
+		return NULL;
+
+	do
+		if (str[i] == '\n')
+			break;
+	while (str[++i]);
+	
+	str[i] = '\0';
+
+	while (getchar() != '\n');
+
+	return str;
+}
+
+//метод s_gets_c на базе getchar
+//безопасная с точки зрения переполнения буфера
+//Основана на посимвольном чтении потока ввода (getchar)
+char* s_gets_c(char* str, unsigned buf_size){
+	
+	unsigned i = 0;
+	int ch;
+
+	//в данном случае из потока ввода забираем всё,
+	// что есть до символа '\n' (когда будет нажат ввод)
+	while ((ch = getchar()) != '\n')
+		//но записываем только пока есть место в строке
+		if (i < (buf_size - 1))
+			str[i++] = ch;
+	//в конце не забываем поставить символ конца строки
+	str[i] = '\0';
+		
+	return str;
+}
+
+
+int main(void) {
+
+	//создадим в качестве входных данных 3 строки
+	char A[] = "aaaa";
+	char B[] = "bbbb";
+	char C[] = "c";
+	char empty[50];
+	
+	//применение метода str_len
+	int len; 
+    len = str_len(A);
+	printf("length of A: %d\n", len); 
+	
+	//применение метода str_сpy
+    str_cpy(B,A);// мы записали значение А в В
+	printf("str_cpy result: %s\n", B);//не забываем, что тип str и поэтому %s !
+	
+	//применение метода str_cat
+    str_cat(B,C);
+	printf("str_cat result: %s\n", B);// str B + str C = aaaac (выше мы изменили значение str B)
+	
+	//применение метода str_cmp
+	int i1 = str_cmp(A,A);//0
+	int i2 = str_cmp(B,A);//>0
+	int i3 = str_cmp(A,C);//<0
+	
+	printf("str_cmp result: 1) %d\n", i1);// не забудь про %d
+	printf("str_cmp result: 2) %d\n", i2);// не забудь про %d
+	printf("str_cmp result: 3) %d\n", i3);// не забудь про %d
+	
+	//применение метода str_str
+	printf("str_str result: %s\n", str_str(B, C));	//повтор sub (в нашем случае C) 
+													//в str (в нашем случае В) начинается с 'с'
+	printf("str_str result: %s\n", str_str(A, C));	//'c' отсутствует в A, возвращаем (null)
+	
+	//применение char_in_string
+	unsigned char symbol = '\0';
+	printf("char_in_string result: %d\n", char_in_string(symbol, A));//%d т.к. в return значенеи int 
+	
+	return 0;
+}

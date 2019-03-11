@@ -1,0 +1,235 @@
+#pragma once
+#include <iostream>
+
+class fraction
+{
+private:
+	int ch, zn;
+	//упрощение дроби - можно сделать private-методом
+	void simplify();
+public:
+	//в конструкторе используем значения аргументов по умолчанию
+	//при этом можно написать 1 конструктор, но работающий в 3 режимах
+	fraction(const int chisl = 0, const int znam = 1);
+	fraction operator+ (const fraction& b) const;
+	fraction operator- (const fraction& b) const;
+	fraction operator* (const fraction& b) const;
+	fraction operator/ (const fraction& b) const;
+	fraction operator- () const;		//унарный минус
+	fraction& operator+= (const fraction& b);
+	fraction& operator-= (const fraction& b);
+	fraction& operator*= (const fraction& b);
+	fraction& operator/= (const fraction& b);
+	bool operator== (const fraction& b) const;
+	bool operator!= (const fraction& b) const;
+	bool operator> (const fraction& b) const;
+	bool operator< (const fraction& b) const;
+	bool operator>= (const fraction& b) const;
+	bool operator<= (const fraction& b) const;
+	double getDecimal() const;
+
+	friend fraction operator+ (const int& a, const fraction& b);
+	friend fraction operator- (const int& a, const fraction& b);
+	friend fraction operator* (const int& a, const fraction& b);
+	friend fraction operator/ (const int& a, const fraction& b);
+
+	friend std::ostream& operator<< (std::ostream& os, const fraction& f);
+};
+
+/*
+В предложенной реализации перегрузки операций,
+где первый операнд типа int не обязательно делать
+дружественными. Но лучше всё же объявлять эти функции
+как дружественные внутри описания класса. В этом случае
+в одном месте наглядно представлены все операции и функции,
+необходимые для работы с классом
+*/
+//fraction operator+ (const int& a, const fraction& b);
+//fraction operator- (const int& a, const fraction& b);
+//fraction operator* (const int& a, const fraction& b);
+//fraction operator/ (const int& a, const fraction& b);
+
+
+
+
+
+
+
+
+
+
+
+
+//ИСХОДНИКИ
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include "stdafx.h"
+#include "fraction.h"
+
+void fraction::simplify()
+{
+	int a, b, r;
+
+	//не забываем про необходимость учёта знака!
+	if (abs(ch) < zn)
+	{
+		a = abs(ch);
+		b = zn;
+	}
+	else
+	{
+		a = zn;
+		b = abs(ch);
+	}
+
+	//алгоритм Эвклида
+	r = a % b;
+	while (r)
+	{
+		a = b;
+		b = r;
+		r = a % b;
+	}
+	//теперь b - НОД
+
+	//упрощаем дробь
+	ch /= b;
+	zn /= b;
+}
+
+fraction::fraction(const int chisl, const int znam)
+{
+	//знаменатель должен получиться положительный!
+	ch = (znam > 0) ? chisl : -chisl;
+	zn = (znam > 0) ? znam : -znam;
+	//упрощаем дробь
+	simplify();
+}
+
+fraction fraction::operator+ (const fraction& b) const
+{
+	//обратите внимание - вызывается конструктор,
+	//а значит результат тут же будет сокращён
+	return fraction(ch*b.zn + b.ch*zn, zn*b.zn);
+}
+
+fraction fraction::operator- (const fraction& b) const
+{
+	return fraction(ch*b.zn - b.ch*zn, zn*b.zn);
+}
+
+fraction fraction::operator* (const fraction& b) const
+{
+	return fraction(ch*b.ch, zn*b.zn);
+}
+
+fraction fraction::operator/ (const fraction& b) const
+{
+	return fraction(ch*b.zn, zn*b.ch);
+}
+
+fraction fraction::operator- () const
+{
+	return fraction(-ch, zn);
+}
+
+fraction& fraction::operator+= (const fraction& b)
+{
+	//реализация построена на уже перегурженных
+	//операциях "=" (по умолчанию) и "+" (сделали сами)
+	//подведите в Visual Studio указатель мыши к знакам
+	//"=" и "+" и увидите всплывающую подсказку, в которой
+	//указан интерфейс этих функций
+	return *this = *this + b;
+}
+
+fraction& fraction::operator-= (const fraction& b)
+{
+	return *this = *this - b;
+}
+
+fraction& fraction::operator*= (const fraction& b)
+{
+	return *this = *this * b;
+}
+
+fraction& fraction::operator/= (const fraction& b)
+{
+	return *this = *this / b;
+}
+
+bool fraction::operator== (const fraction& b) const
+{
+	return ((ch*b.zn) == (b.ch*zn)) ? true : false;
+}
+
+bool fraction::operator!= (const fraction& b) const
+{
+	return ((ch*b.zn) != (b.ch*zn)) ? true : false;
+}
+
+bool fraction::operator> (const fraction& b) const
+{
+	return ((ch*b.zn) > (b.ch*zn)) ? true : false;
+}
+
+bool fraction::operator< (const fraction& b) const
+{
+	return ((ch*b.zn) < (b.ch*zn)) ? true : false;
+}
+
+bool fraction::operator>= (const fraction& b) const
+{
+	return ((ch*b.zn) >= (b.ch*zn)) ? true : false;
+}
+
+bool fraction::operator<= (const fraction& b) const
+{
+	return ((ch*b.zn) <= (b.ch*zn)) ? true : false;
+}
+
+double fraction::getDecimal() const
+{
+	return (double)ch / (double)zn;
+}
+
+fraction operator+ (const int& a, const fraction& b)
+{
+	return b + a;
+	//Меняя местами операнды,
+	//мы задействуем уже готовый метод "+"
+	//для сложения двух дробей.
+	//При этом работает неявное приведение типов:
+	//return b + (fraction) a;
+	//Приведение типов неявно вызывает конструктор:
+	//return b + fraction (a);
+}
+
+fraction operator- (const int& a, const fraction& b)
+{
+	//обратите внимание на использование
+	//унарного минуса
+	return -b + a;
+}
+
+fraction operator* (const int& a, const fraction& b)
+{
+	return b * a;
+}
+
+fraction operator/ (const int& a, const fraction& b)
+{
+	//здесь не получится поменять операнды местами,
+	//поэтому в явном виде приводим целый аргумент "a"
+	//к типу дроби, вызывая конструктор
+	return fraction (a) / b;
+}
+
+std::ostream& operator<< (std::ostream& os, const fraction& f)
+{
+	os << f.ch << '/' << f.zn;
+	//возврат os даёт возможность
+	//строить цепочки вывода,
+	//многократно используя <<
+	//в одном выражении
+	return os;
+}

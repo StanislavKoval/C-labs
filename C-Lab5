@@ -496,3 +496,8 @@ std::ostream& operator<<(std::ostream& os, const String& s)
 	os << s.str;
 	return os;
 }
+
+
+ССЫЛКИ
+
+http://www.cyberforum.ru/cpp-beginners/thread164563.html

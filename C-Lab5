@@ -1,0 +1,498 @@
+#pragma once	//простой вариант для заголовочных файлов
+
+//классический вариант условной компиляции
+//#ifndef _String_h_
+//#define _String_h_
+//обратите внимение на директиву #endif в конце файла
+
+#include <iostream>
+
+/*
+Обратите внимание, что большинство методов
+реализованы в двух вариантах:
+1. с аргументом const String&
+2. с аргументом const char*
+Второй вариант не обязателен,
+т.к. работает неявное приведеление типов.
+Компилятор понимает, что должен получить
+объект String, но видит аргумент типа char*.
+Тогда он начинает искать конструктор класса
+String, принимающий char*. Такой конструктор
+существует, поэтому создаётся временный объект.
+Но в ходе его создания вызывается
+потенциально длительная функция strcpy.
+Если можно избежать лишнего её вызова,
+это следует сделать. Поэтому почти все методы
+класса и имеют по 2 версии, с разным типом аргумента.
+*/
+
+class String
+{
+private:
+	char* str;
+	int len;
+	String(const int length);		//приватный(!) конструктор
+public:
+	String(const char* s = "");		//обратите внимание, что предусмотрено значение по умолчанию
+	String(const String& s);		//конструктор копирования
+	char& operator[] (const int i);	//доступ к символу по индексу с возможностью редактирования
+	const char& operator[] (const int i) const;	//доступ к символу для константных объектов
+	String& operator= (const String& s);	
+	String& operator= (const char* s);
+	String operator+ (const String& s) const;
+	String operator+ (const char* s) const;
+	String& operator+= (const String& s);
+	String& operator+= (const char* s);
+	bool isEmpty() const;		//проверка - строка пуста?
+	bool operator== (const String& s) const;
+	bool operator== (const char* s) const;
+	bool operator!= (const String& s) const;
+	bool operator!= (const char* s) const;
+	bool operator< (const String& s) const;
+	bool operator< (const char* s) const;
+	bool operator<= (const String& s) const;
+	bool operator<= (const char* s) const;
+	bool operator> (const String& s) const;
+	bool operator> (const char* s) const;
+	bool operator>= (const String& s) const;
+	bool operator>= (const char* s) const;
+	int length() const;		//получение значения приватного поля len
+	String& clear();		//очищаем строку, но не удаляем сам объект
+	String substring(int begin, int end) const;	//формируем подстроку, копирую символы с индексами от begin до end
+	String left(int count) const;	//подстрока длиной count, начиная с левого края
+	String right(int count) const;	//подстрока длиной count, начиная с правого края
+	bool hasSubstring(const String& s) const;	//проверка на наличие подстроки в строке
+	bool hasSubstring(const char* s) const;
+	bool hasSymbol(const char symbol) const;	//проверка на наличие символа в строке
+	String removeSubstring(int begin, int end) const;	//формируем строку, исключая символы с индексами от begin до end
+	String removeSubstring(const String& s) const;		//формируем строку, исключая заданную подстроку
+	String removeSubstring(const char* s) const;
+	String removeLeft(int count) const;			//формируем строку, исключая count символов слева
+	String removeRight(int count) const;		//формируем строку, исключая count символов справа
+	String getFirstWord(const String& separator) const;	//формируем строку, в которое записываем первое слово текущей
+	String getLastWord(const String& separator) const;	//формируем строку, в которое записываем последнее слово текущей
+	~String();
+
+	//перегрузка операций, в случае если первый операнд - строка в стиле Си (char*)
+	friend String operator+ (const char* s1, const String& s2);
+	friend bool operator== (const char* s1, const String& s2);
+	friend bool operator!= (const char* s1, const String& s2);
+	friend bool operator> (const char* s1, const String& s2);
+	friend bool operator< (const char* s1, const String& s2);
+	friend bool operator>= (const char* s1, const String& s2);
+	friend bool operator<= (const char* s1, const String& s2);
+	
+	//перегрузка <<, обеспечивающая вывод с использованием cout
+	friend std::ostream& operator<<(std::ostream& os, const String& s);
+};
+
+//#endif
+
+
+
+
+
+
+===================================================================================================================================
+ИСХОДНИКИ
+
+#include "stdafx.h"		//файл предварительно скомпилированного заголовка (Visual Studio)
+#include "String.h"		//не забываем подключать файл с определением класса
+#include <cstring>
+
+String::String(const char* s)
+{
+	len = std::strlen(s);
+	str = new char[len+1];
+	std::strcpy(str, s);
+}
+
+String::String(const String& s)
+{
+	len = s.len;
+	str = new char[len+1];
+	std::strcpy(str, s.str);
+
+	std::cout << "!!!\n";
+}
+
+String::String(const int length)
+{
+	//основная задача этого конструктора - 
+	//выделение буфера необходимой длины
+	len = length;
+	str = new char[len+1];
+	str[0] = '\0';			//необязательное действие
+}
+
+char& String::operator[] (const int i)
+{
+	if (i >= 0 && i < len)
+		return str[i];
+	else
+		return str[len];
+}
+
+const char& String::operator[] (const int i) const
+{
+	if (i >= 0 && i < len)
+		return str[i];
+	else
+		return str[len];
+}
+
+String& String::operator= (const String& s)
+{
+	if (this == &s)
+		return *this;
+
+	delete[] str;
+	len = s.len;
+	str = new char[len+1];
+	std::strcpy(str, s.str);
+	return *this;
+}
+
+String& String::operator= (const char* s)
+{
+	delete[] str;
+	len = std::strlen(s);
+	str = new char[len+1];
+	std::strcpy(str, s);
+	return *this;
+}
+
+String String::operator+ (const String& s) const
+{
+	int length = len + s.len;
+	String concat (length);
+	std::strcpy(concat.str, str);
+	//std::strcat(concat.str, s.str);
+	//лучше использовать strcpy,
+	//вычисляя адрес '\0',
+	//а не пробегая всю строку как в strcat
+	std::strcpy(concat.str + len, s.str);
+	return concat;
+}
+
+String String::operator+ (const char* s) const
+{
+	int length = len + std::strlen(s);
+	String concat(length);
+	std::strcpy(concat.str, str);
+	std::strcpy(concat.str + len, s);
+	return concat;
+}
+
+String& String::operator+= (const String& s)
+{
+	//защита от дурака
+	if (s.isEmpty())
+		return *this;
+
+	//вариант для ленивых
+	//*this = *this + s;
+	//влечёт за собой вызов:
+	//1. оператора "+"
+	//2. конструктора копирования
+	//(при возврате объекта из operator+)
+	//3. оператароа "="
+
+	//более производительный вариант
+	char* buf = new char[len + s.len + 1];
+	std::strcpy(buf, str);
+	std::strcpy(buf + len, s.str);
+	delete[] str;	//очищаем старый буфер
+	str = buf;
+	len += s.len;
+	
+	return *this;
+}
+
+String& String::operator+= (const char* s)
+{
+	//защита от дурака
+	if (s[0]=='\0')
+		return *this;
+	
+	//вариант для ленивых
+	*this = *this + s;
+
+	//более производительный вариант
+	int len2 = std::strlen(s);
+	char* buf = new char[len + len2 + 1];
+	std::strcpy(buf, str);
+	std::strcpy(buf + len, s);
+	delete[] str;		//очищаем старый буфер
+	str = buf;
+	len += len2;
+
+	return *this;
+}
+
+bool String::isEmpty() const
+{
+	return (len ? false : true);
+}
+
+bool String::operator== (const String& s) const
+{
+	//эта и последующие функции представляют
+	//собой "обёртку" вокруг strcmp
+	return ((std::strcmp(str, s.str) == 0) ? true : false);
+}
+
+bool String::operator== (const char* s) const
+{
+	return ((std::strcmp(str, s) == 0) ? true : false);
+}
+
+bool String::operator!= (const String& s) const
+{
+	return ((std::strcmp(str, s.str) != 0) ? true : false);
+}
+
+bool String::operator!= (const char* s) const
+{
+	return ((std::strcmp(str, s) != 0) ? true : false);
+}
+
+bool String::operator< (const String& s) const
+{
+	return ((std::strcmp(str, s.str) < 0) ? true : false);
+}
+
+bool String::operator< (const char* s) const
+{
+	return ((std::strcmp(str, s) < 0) ? true : false);
+}
+
+bool String::operator<= (const String& s) const
+{
+	return ((std::strcmp(str, s.str) <= 0) ? true : false);
+}
+
+bool String::operator<= (const char* s) const
+{
+	return ((std::strcmp(str, s) <= 0) ? true : false);
+}
+
+bool String::operator> (const String& s) const
+{
+	return ((std::strcmp(str, s.str) > 0) ? true : false);
+}
+
+bool String::operator> (const char* s) const
+{
+	return ((std::strcmp(str, s) > 0) ? true : false);
+}
+
+bool String::operator>= (const String& s) const
+{
+	return ((std::strcmp(str, s.str) >= 0) ? true : false);
+}
+
+bool String::operator>= (const char* s) const
+{
+	return ((std::strcmp(str, s) >= 0) ? true : false);
+}
+
+int String::length() const
+{
+	return len;
+}
+
+String& String::clear()
+{
+	len = 0;
+	delete[] str;
+	str = new char[1];
+	*str = '\0';
+	return *this;
+}
+
+String String::substring(int begin, int end) const
+{
+	/*
+	begin - индекс (начиная с 0) первого символа,
+	который необходимо скопировать
+	end - индекс (начиная с 0) последнего символа,
+	который необходимо скопировать
+	*/
+	
+	//проверяем, не выходят ли индексы
+	//за пределы строки
+	if (end > len)
+		end = len;
+	if (begin < 0)
+		begin = 0;
+	
+	//проверка адекватности интервала
+	if (begin > end)
+		return String();
+	
+	int length = end - begin + 1;
+	String result(length);
+	for (unsigned i = 0; i < length; i++)
+		result.str[i] = str[begin + i];
+	//не забываем про завершение строки
+	result.str[length] = '\0';
+	return result;
+}
+
+String String::left(int count) const
+{
+	return substring(0, count-1);
+}
+
+String String::right(int count) const
+{
+	return substring(len- count, len - 1);
+}
+
+bool String::hasSubstring(const String& s) const
+{
+	//фактически "обёртка" вокруг strstr
+	return (std::strstr(this->str, s.str) ? true : false);
+}
+
+bool String::hasSubstring(const char* s) const
+{
+	return (std::strstr(this->str, s) ? true : false);
+}
+
+bool String::hasSymbol(const char symbol) const
+{
+	int i = 0;
+
+	do
+		if (str[i] == symbol)
+			return true;
+	while (str[i++]);
+
+	return false;
+}
+
+String String::removeSubstring(int begin, int end) const
+{
+	/*
+	begin - индекс (начиная с 0) первого символа
+	исключаемого фрагмента
+	end - индекс (начиная с 0) символа, следующего 
+	за исключаемым фрагментом
+	*/
+	if (begin <= end)
+		return left(begin) + right(len - end);
+	else
+		return String();
+}
+
+String String::removeSubstring(const String& s) const
+{
+	char* start = std::strstr(this->str, s.str);
+	if (start)
+		return removeSubstring(start - str, len - (start - str) + s.len-1);
+	else 
+		return *this;
+}
+
+String String::removeSubstring(const char* s) const
+{
+	char* start = std::strstr(this->str, s);
+	if (start)
+		return removeSubstring(start - str, len - (start - str) + std::strlen(s)-1);
+	else
+		return *this;
+}
+
+String String::removeLeft(int count) const
+{
+	return removeSubstring(0,count);
+}
+
+String String::removeRight(int count) const
+{
+	return removeSubstring(len-count, len);
+}
+
+String String::getFirstWord(const String& separator) const
+{
+	//separator - строка разделителей
+	int begin = 0;
+	while (separator.hasSymbol(str[begin]) && (begin < len))
+		begin++;
+	
+	int end = begin;
+	while (!separator.hasSymbol(str[end]) && (end < len))
+		end++;
+	return substring(begin,end-1);
+}
+
+String String::getLastWord(const String& separator) const
+{
+	int end = len;
+	while (separator.hasSymbol(str[end]) && (end>0))
+		end--;
+
+	int begin = end;
+	while (!separator.hasSymbol(str[begin]) && (begin>=0))
+		begin--;
+	return substring(begin+1, end);
+}
+
+String::~String()
+{
+	delete[] str;
+}
+
+String operator+ (const char* s1, const String& s2)
+{
+	//вариант для ленивых
+	//return String(s1) + s2;
+	//плохо, потому что влечёт за собой
+	//вызов конструктора, содержащий strcpy
+
+	//более производительный вариант
+	int len1 = std::strlen(s1);
+	int length = len1 + s2.len;
+	String concat(length);
+	std::strcpy(concat.str, s1);
+	std::strcpy(concat.str+len1, s2.str);
+	return concat;
+}
+
+bool operator== (const char* s1, const String& s2)
+{
+	return ((std::strcmp(s1, s2.str) == 0) ? true : false);
+}
+
+bool operator!= (const char* s1, const String& s2)
+{
+	return ((std::strcmp(s1, s2.str) != 0) ? true : false);
+}
+
+bool operator> (const char* s1, const String& s2)
+{
+	return ((std::strcmp(s1, s2.str) > 0) ? true : false);
+}
+
+bool operator< (const char* s1, const String& s2)
+{
+	return ((std::strcmp(s1, s2.str) < 0) ? true : false);
+}
+
+bool operator>= (const char* s1, const String& s2)
+{
+	return ((std::strcmp(s1, s2.str) >= 0) ? true : false);
+}
+
+bool operator<= (const char* s1, const String& s2)
+{
+	return ((std::strcmp(s1, s2.str) <= 0) ? true : false);
+}
+
+std::ostream& operator<<(std::ostream& os, const String& s)
+{
+	os << s.str;
+	return os;
+}
